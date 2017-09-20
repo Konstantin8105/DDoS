@@ -1,9 +1,11 @@
 package ddos
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"runtime"
 	"sync/atomic"
 )
@@ -19,17 +21,21 @@ type DDoS struct {
 	amountRequests int64
 }
 
-// NewDDoS - initialization of new DDoS attack
-func NewDDoS(url string, workers int) *DDoS {
-	s := make(chan bool)
+// New - initialization of new DDoS attack
+func New(URL string, workers int) (*DDoS, error) {
 	if workers < 1 {
-		workers = 1
+		return nil, fmt.Errorf("Amount of workers cannot be less 1")
 	}
+	u, err := url.Parse(URL)
+	if err != nil || len(u.Host) == 0 {
+		return nil, fmt.Errorf("Undefined host or error = %v", err)
+	}
+	s := make(chan bool)
 	return &DDoS{
-		url:           url,
+		url:           URL,
 		stop:          &s,
 		amountWorkers: workers,
-	}
+	}, nil
 }
 
 // Run - run DDoS attack

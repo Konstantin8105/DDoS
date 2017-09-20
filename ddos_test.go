@@ -12,7 +12,10 @@ import (
 )
 
 func TestNewDDoS(t *testing.T) {
-	d := ddos.NewDDoS("127.0.0.1", 0)
+	d, err := ddos.New("http://127.0.0.1", 1)
+	if err != nil {
+		t.Error("Cannot create a new ddos structure. Error = ", err)
+	}
 	if d == nil {
 		t.Error("Cannot create a new ddos structure")
 	}
@@ -26,7 +29,10 @@ func TestDDoS(t *testing.T) {
 	createServer(port, t)
 
 	url := "http://127.0.0.1:" + strconv.Itoa(port)
-	d := ddos.NewDDoS(url, 100)
+	d, err := ddos.New(url, 100)
+	if err != nil {
+		t.Error("Cannot create a new ddos structure")
+	}
 	d.Run()
 	time.Sleep(time.Second)
 	d.Stop()
@@ -46,4 +52,31 @@ func createServer(port int, t *testing.T) {
 			t.Fatalf("Server is down. %v", err)
 		}
 	}()
+}
+
+func TestWorkers(t *testing.T) {
+	_, err := ddos.New("127.0.0.1", 0)
+	if err == nil {
+		t.Error("Cannot create a new ddos structure")
+	}
+}
+
+func TestUrl(t *testing.T) {
+	_, err := ddos.New("some_strange_host", 1)
+	if err == nil {
+		t.Error("Cannot create a new ddos structure")
+	}
+}
+
+func ExampleNew() {
+	workers := 100
+	d, err := ddos.New("http://127.0.0.1:80", workers)
+	if err != nil {
+		panic(err)
+	}
+	d.Run()
+	time.Sleep(time.Second)
+	d.Stop()
+	fmt.Println("DDoS attack server: http://127.0.0.1:80")
+	// Output: DDoS attack server: http://127.0.0.1:80
 }

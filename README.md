@@ -7,3 +7,23 @@
 [![GoDoc](https://godoc.org/github.com/Konstantin8105/DDoS?status.svg)](https://godoc.org/github.com/Konstantin8105/DDoS)
 
 DDoS attack. Creating infinite http GET requests.
+If you need more information, then please see [wiki](https://en.wikipedia.org/wiki/Denial-of-service_attack#Defense_techniques).
+
+**Library created just for education task.**
+
+Minimal example of using:
+
+```golang
+func main() {
+	workers := 100
+	d, err := ddos.New("http://127.0.0.1:80", workers)
+	if err != nil {
+		panic(err)
+	}
+	d.Run()
+	time.Sleep(time.Second)
+	d.Stop()
+	fmt.Println("DDoS attack server: http://127.0.0.1:80")
+	// Output: DDoS attack server: http://127.0.0.1:80
+}
+```
