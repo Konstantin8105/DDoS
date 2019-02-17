@@ -3,6 +3,7 @@ package ddos_test
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -24,12 +25,12 @@ func TestNewDDoS(t *testing.T) {
 func TestDDoS(t *testing.T) {
 	port, err := freeport.Get()
 	if err != nil {
-		t.Errorf("Cannot found free tcp port. Error = ", err)
+		t.Errorf("Cannot found free tcp port. Error = %v", err)
 	}
 	createServer(port, t)
 
 	url := "http://127.0.0.1:" + strconv.Itoa(port)
-	d, err := ddos.New(url, 100)
+	d, err := ddos.New(url, 1000)
 	if err != nil {
 		t.Error("Cannot create a new ddos structure")
 	}
@@ -38,8 +39,14 @@ func TestDDoS(t *testing.T) {
 	d.Stop()
 	success, amount := d.Result()
 	if success == 0 || amount == 0 {
-		t.Errorf("Negative result of DDoS attack.\nSuccess requests = %v.\nAmount requests = %v", success, amount)
+		t.Errorf("Negative result of DDoS attack.\n"+
+			"Success requests = %v.\n"+
+			"Amount requests = %v", success, amount)
 	}
+	if success == amount {
+		t.Errorf("Cannot DDos of server")
+	}
+	t.Logf("Statistic: %d %d", success, amount)
 }
 
 // Create a simple go server
@@ -69,7 +76,7 @@ func TestUrl(t *testing.T) {
 }
 
 func ExampleNew() {
-	workers := 100
+	workers := 1000
 	d, err := ddos.New("http://127.0.0.1:80", workers)
 	if err != nil {
 		panic(err)
@@ -77,6 +84,12 @@ func ExampleNew() {
 	d.Run()
 	time.Sleep(time.Second)
 	d.Stop()
-	fmt.Println("DDoS attack server: http://127.0.0.1:80")
-	// Output: DDoS attack server: http://127.0.0.1:80
+	fmt.Fprintf(os.Stdout, "DDoS attack server: http://127.0.0.1:80\n")
+	success, amount := d.Result()
+	if success != amount {
+		fmt.Fprintf(os.Stdout, "success ddos\n")
+	}
+	// Output:
+	// DDoS attack server: http://127.0.0.1:80
+	// success ddos
 }
