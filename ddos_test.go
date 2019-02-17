@@ -43,9 +43,6 @@ func TestDDoS(t *testing.T) {
 			"Success requests = %v.\n"+
 			"Amount requests = %v", success, amount)
 	}
-	if success == amount {
-		t.Errorf("Cannot DDos of server")
-	}
 	t.Logf("Statistic: %d %d", success, amount)
 }
 
@@ -85,11 +82,6 @@ func ExampleNew() {
 	time.Sleep(time.Second)
 	d.Stop()
 	fmt.Fprintf(os.Stdout, "DDoS attack server: http://127.0.0.1:80\n")
-	success, amount := d.Result()
-	if success != amount {
-		fmt.Fprintf(os.Stdout, "success ddos\n")
-	}
 	// Output:
 	// DDoS attack server: http://127.0.0.1:80
-	// success ddos
 }
